@@ -1,0 +1,39 @@
+---
+title: "cgr3d"
+author: "Gaurav"
+date: "January 25, 2019"
+output: html_document
+---
+```{r}
+library(plotly)
+aPos <- c(0,0,0)
+tPos <- c(100, 0, 0)
+cPos <- c(50,50*sqrt(3),0)
+gPos <- c(50,25*sqrt(3),50*sqrt(3))
+vertices <- list(a = aPos, t = tPos, g=gPos, c = cPos )
+
+```
+
+```{r}
+sequences <- Biostrings::readDNAStringSet( "repeats_dm.fa" )
+sequence <- tolower(toString(sequences[1]))
+```
+```{r}
+split = 1/2
+positions <- matrix(rep(0, nchar(sequence)), nrow = nchar(sequence)+1, ncol = 3)
+for(i in 2:nrow(positions)){
+positions[i,]  <- (positions[i-1,] + vertices[[substr(sequence, i-1, i-1)]])*split
+}
+```
+
+```{r}
+p <- plot_ly(type="scatter3d", x = positions[,1], y = positions[,2], z = positions[,3] )
+p2 <- plot3dseq(tolower(toString(sequences[2])))
+p2
+
+```
+```{r}
+p1 <- plot3dseq(getSequence(sequences,1))
+p4 <- plot3dseq(getSequence(sequences,4))
+```
+

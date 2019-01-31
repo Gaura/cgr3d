@@ -1,0 +1,210 @@
+---
+title: "Untitled"
+author: "Gaurav"
+date: "January 25, 2019"
+output: html_document
+---
+
+```{r}
+pos_a <- c( 0, 0)
+pos_t <- c(10, 0)
+pos_c <- c(10,10)
+pos_g <- c( 0,10)
+
+pos_start <- c(5,5)
+pos_vertices <- list( a=pos_a, t=pos_t, c=pos_c, g=pos_g )
+
+seq_of_interest <- "gaattc"
+pos_trace <- matrix( rep( 0, 2 * (nchar(seq_of_interest)+1) ), ncol=2 )
+pos_trace[1,] <- pos_start
+
+for ( i in 2:nrow(pos_trace) ) {
+  pos_trace[i,] <- ( pos_trace[i-1,] + pos_vertices[[substr(seq_of_interest, i-1, i-1)]] ) / 2
+}
+
+plot(pos_trace[,1],pos_trace[,2])
+```
+
+```{r}
+library(plotly)
+aPos <- c(0,0,0)
+tPos <- c(100, 0, 0)
+cPos <- c(50,50*sqrt(3),0)
+gPos <- c(50,25*sqrt(3),50*sqrt(3))
+# aPos <- c(0,0,0)
+# tPos <- c(100, 0, 0)
+# cPos <- c(50,50*sqrt(3),0)
+# gPos <- c(50,25*sqrt(3),0)
+vertices <- list(a = aPos, t = tPos, g=gPos, c = cPos )
+# pos_g <- c()
+sequences <- Biostrings::readDNAStringSet( "repeats_dm.fa" )
+sequence <- tolower(toString(sequences[1]))
+
+# pos_trace <- matrix( rep( 0, 2 * (nchar(sequences)+1) ), ncol=3 )
+# pos_start <- c()
+
+# positions <- matrix(nrow = 4,ncol = 3)
+# for(i in 1:3){
+#       positions[1,i] <- aPos[i]
+#       positions[2,i] <- tPos[i]
+#       positions[3,i] <- gPos[i]
+#       positions[4,i] <- cPos[i]
+# }
+split = 1/2
+startPos <- c(50,25*sqrt(3),25*sqrt(3))
+positions <- matrix(rep(0, nchar(sequence)), nrow = nchar(sequence)+1, ncol = 3)
+for(i in 2:nrow(positions)){
+      positions[i,]  <- (positions[i-1,] + vertices[[substr(sequence, i-1, i-1)]])*split
+}
+
+p <- plot_ly(type="scatter3d", x = positions[,1], y = positions[,2], z = positions[,3] )
+
+```
+```{r}
+p2 <- plot3dseq(tolower(toString(sequences[2])))
+```
+```{r}
+sequences <- Biostrings::readDNAStringSet( "repeats_sc.fa" )
+p3 <- plot3dseq(getSequence(sequences,3))
+```
+```{r}
+p1 <- plot3dseq(getSequence(sequences,1))
+p4 <- plot3dseq(getSequence(sequences,4))
+p <- subplot(p1,p4)
+p
+```
+```{r}
+sample( strsplit("AAATTTCCGG","")[[1]], 5000, replace=TRUE ) -> s
+st <- paste0(s,collapse = "")
+```
+
+```{r}
+pr <- plot3dseq(tolower(st),1/2)
+pr                  
+```
+```{r}
+# Load packages
+library( "Biostrings")
+library( "ggplot2" )
+library( "cowplot" )
+library( "readr" )
+library( "stringr" )
+
+# “Random” sequence
+# paste0( sample( strsplit("AAATTTCCGG","")[[1]], 5000, replace=TRUE ), collapse="" ) -> random_seq
+# random_seq <- tolower(random_seq)
+
+# Starting conditions
+pos_a <- c( 0, 0)
+pos_t <- c(10, 0)
+pos_c <- c( 0,10)
+pos_g <- c(10,10)
+
+pos_start <- c(5,5)
+pos_vertices <- list( a=pos_a, t=pos_t, c=pos_c, g=pos_g )
+
+# Load sequences
+# repeats_dm <- readDNAStringSet( "repeats_dm.fa" )
+# repeats_sc <- readDNAStringSet( "repeats_sc.fa" )
+
+# Calculate trace and visualize
+plot_cgr <- function( seq_of_interest, seq_name ) {
+  pos_trace <- matrix( rep( 0, 2 * nchar(seq_of_interest) ), ncol=2 )
+  pos_trace[1,] <- pos_start
+
+  for ( i in 2:nrow(pos_trace) ) {
+    pos_trace[i,] <- ( pos_trace[i-1,] + pos_vertices[[substr(seq_of_interest, i, i)]] ) / 2
+  }
+  
+  df <- data.frame( pos_trace )
+  df$pos <- 1:nrow(df)
+
+  print(ggplot( df ) +
+    geom_point( aes( X1, X2, color=pos ), size=1 ) +
+    ggtitle( seq_name ))
+  animation::ani.pause(0.01)
+}
+
+# list_seq   <- repeats_dm[c(1:6)]
+# list_names <- names( list_seq )
+# p <- mapply( function(x,y) plot_cgr( tolower(x), y ), list_seq, list_names, SIMPLIFY=FALSE )
+# p2 <- plot_grid( p[[1]], p[[2]], p[[3]], p[[4]], p[[5]], p[[6]] )
+# save_plot( "repeats_dm_1-6.pdf", p2, nrow=2, base_aspect_ratio=4 )
+
+```
+```{r}
+Biostrings::readDNAStringSet("col.fasta") -> collagen_seq
+col_seq <- tolower(toString(collagen_seq[1]))
+col_seq <- gsub('n','',col_seq)
+```
+```{r}
+readFasta <- function(file){
+Biostrings::readDNAStringSet(file) -> collagen_seq
+col_seq <- tolower(toString(collagen_seq[1]))
+col_seq <- gsub('n','',col_seq)
+}
+```
+
+```{r}
+plot_cgr(col_seq,"Collagen") -> col_plot
+
+```
+```{r}
+readFasta("dmd.fasta") -> dmd
+dmd <- tolower(toString(dmdseq[1]))
+plot_cgr(dmd,"DMD") -> pdmd
+```
+```{r}
+library("Biostrings")
+Biostrings::readDNAStringSet("dmd.fasta") -> dmd
+Biostrings::reverseComplement(dmd) -> rdmd
+tolower(toString(rdmd)) -> rdmd
+plot_cgr(rdmd,"Reverse DMD") -> prdmd
+```
+
+```{r}
+plot_animate <- function(seq_of_interest,seq_name){
+      # Calculate trace and visualize
+  pos_trace <- matrix( nrow = nchar(seq_of_interest), ncol=2 )
+  pos_trace[1,] <- pos_start
+
+  for ( i in 2:nrow(pos_trace) ) {
+    pos_trace[i,] <- ( pos_trace[i-1,] + pos_vertices[[substr(seq_of_interest, i, i)]] ) / 2
+  }
+  
+  df <- data.frame( pos_trace )
+  df$pos <- 1:nrow(df)
+  colnames(df) <- c('x','y')
+
+  for(i in 2:nrow(df)){
+        print(ggplot() + geom_point(aes(y = df$y[1:i], x = df$x[1:i]),size=1) + xlim(1,10) + ylim(1,10))
+        animation::ani.pause(interval = 0.05)
+  }
+  
+}
+
+```
+```{r}
+library("ggplot2")
+fun <- function(seq_name){
+for(i in 2:10){
+      print(ggplot() + geom_point(aes(x=mdf$x[1:i],y = mdf$y[1:i]), size=1 ) + ggtitle( seq_name ))
+      animation::ani.pause(interval = 0.2)
+}
+}
+```
+
+```{r}
+plot_cgr3d <- function( seq_of_interest, seq_name ) {
+  pos_trace <- matrix( rep( 0, 3 * nchar(seq_of_interest) ), ncol=3 )
+  pos_start <- c(0,0,0)
+  pos_trace[1,] <- pos_start
+  pos_trace[,3] <- c(1:floor(nchar(seq_of_interest)/2),ceiling(nchar(seq_of_interest)/2):1)
+  for (i in 2:nrow(pos_trace) ) {
+    pos_trace[i,] <- ( pos_trace[i-1,] + pos_vertices[[substr(seq_of_interest, i, i)]] ) / 2
+  }
+   p <- plot_ly(type="scatter3d", x = pos_trace[,1], y = pos_trace[,2], z = pos_trace[,3],
+                   marker = (list (size = 0.5)))
+}
+```
+
